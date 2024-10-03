@@ -148,7 +148,7 @@ export default function AdditionalPage() {
   const { shopData, files } = useLoaderData();
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [showToast, setShowToast] = useState(false); // State for showing toast 123
+  const [showToast, setShowToast] = useState(false); // State for showing toast 123456
 
   const handleDownload = async () => {
     setIsDownloading(true);
