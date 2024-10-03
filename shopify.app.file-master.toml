@@ -1,0 +1,29 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "55c2f135ecbde996bec49c0df7e13434"
+name = "file-master"
+handle = "file-master"
+application_url = "https://advertisement-norm-cb-am.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "cc-awesome-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_files,write_files"
+
+[auth]
+redirect_urls = [
+  "https://advertisement-norm-cb-am.trycloudflare.com/auth/callback",
+  "https://advertisement-norm-cb-am.trycloudflare.com/auth/shopify/callback",
+  "https://advertisement-norm-cb-am.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[pos]
+embedded = false
