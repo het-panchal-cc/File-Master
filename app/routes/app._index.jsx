@@ -84,15 +84,13 @@ export default function FirstPagePage() {
                     <Text as="h1" variant="headingXl">
                       Good {greetings()},&nbsp;
                     </Text>
-                    {shopOwnerName && (
-                      <Text
-                        as="h1"
-                        variant="headingXl"
-                        style={{ display: "none" }}
-                      >
-                        {shopOwnerName} 👋
-                      </Text>
-                    )}
+                    <Text
+                      as="h1"
+                      variant="headingXl"
+                      style={{ display: "none" }}
+                    >
+                      {shopOwnerName ? shopOwnerName : "User"} 👋
+                    </Text>
                   </Box>
                   <Box paddingBlockStart="100">
                     <Text as="p" variant="bodyLg">
@@ -100,7 +98,6 @@ export default function FirstPagePage() {
                     </Text>
                   </Box>
                 </Box>
-
               </>
             </Box>
           </Card>
@@ -129,15 +126,15 @@ export default function FirstPagePage() {
                   <InlineStack align="center">
                     <Text as="h2" variant="headingLg">
                       Welcome to FileMaster - Files Exporter
-
-
                     </Text>
                   </InlineStack>
                 </Box>
                 <Box paddingBlockStart="100">
                   <InlineStack align="center">
                     <Text as="p" variant="bodyLg">
-                      FileMaster makes it easy to download all your media files (images, videos, etc.) from our FileMaster - Files Exporter app.
+                      FileMaster makes it easy to download all your media files
+                      (images, videos, etc.) from our FileMaster - Files
+                      Exporter app.
                     </Text>
                   </InlineStack>
                 </Box>
