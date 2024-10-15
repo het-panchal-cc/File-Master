@@ -1,288 +1,158 @@
 import {
   Layout,
-  Text,
-  ProgressBar,
   Page,
-  LegacyCard,
   EmptyState,
   Card,
-  Frame,
-  Toast, // Import Toast
+  Box,
+  Text,
+  InlineStack,
+  BlockStack,
+  Button,
 } from "@shopify/polaris";
-import app_logo from "../assets/logo1.jpg";
-import { useState } from "react";
+import main_ScriptInjector from "../assets/logo1.jpg";
+// import head_ScriptInjector from "../assets/ScriptInjector.png";
 import { useLoaderData } from "@remix-run/react";
-import JSZip from "jszip";
-import pkg from "file-saver";
-const { saveAs } = pkg;
-import { authenticate } from "../shopify.server";
-import { ImportIcon } from "@shopify/polaris-icons";
+import { apiVersion, authenticate } from "../shopify.server";
+import { useEffect, useState } from "react";
 
 export const loader = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
+  try {
+    const { session } = await authenticate.admin(request);
 
-  // GraphQL query to fetch all media types (MediaImage, Video, ExternalVideo, Model3d, GenericFile)
-  const response = await admin.graphql(`
-    query {
-      shop {
-        id
-        name
-        email
-        myshopifyDomain
-      }
-      files(first: 50) {
-        edges {
-          node {
-            ... on MediaImage {
-              id
-              image {
-                url
-              }
-            }
-            ... on Video {
-              id
-              alt
-              originalSource {
-                url
-              }
-            }
-            ... on ExternalVideo {
-              id
-              alt
-              embedUrl
-            }
-            ... on Model3d {
-              id
-              alt
-              preview {
-                image {
-                  originalSrc
-                }
-              }
-            }
-            ... on GenericFile {
-              id
-              alt
-              url
-              mimeType
-            }
-          }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
+    const { shop, accessToken } = session;
+    const responseOfShop = await fetch(
+      `https://${shop}/admin/api/${apiVersion}/shop.json`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": accessToken,
+        },
+      },
+    );
+
+    if (!responseOfShop.ok) {
+      throw new Error(
+        `Failed to fetch shop details: ${responseOfShop.status} ${responseOfShop.statusText}`,
+      );
     }
-  `);
 
-  const responseBody = await response.json();
-  const shopData = responseBody.data.shop;
-  let files = responseBody.data.files.edges;
-
-  // Paginate if there are more media files
-  let hasNextPage = responseBody.data.files.pageInfo.hasNextPage;
-  let endCursor = responseBody.data.files.pageInfo.endCursor;
-
-  while (hasNextPage) {
-    const nextPageResponse = await admin.graphql(`
-      query {
-        files(first: 50, after: "${endCursor}") {
-          edges {
-            node {
-              ... on MediaImage {
-                id
-                image {
-                  url
-                }
-              }
-              ... on Video {
-                id
-                alt
-                originalSource {
-                  url
-                }
-              }
-              ... on ExternalVideo {
-                id
-                alt
-                embedUrl
-              }
-              ... on Model3d {
-                id
-                alt
-                preview {
-                  image {
-                    originalSrc
-                  }
-                }
-              }
-              ... on GenericFile {
-                id
-                alt
-                url
-                mimeType
-              }
-            }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-        }
-      }
-    `);
-
-    const nextPageResponseBody = await nextPageResponse.json();
-    files = files.concat(nextPageResponseBody.data.files.edges);
-    hasNextPage = nextPageResponseBody.data.files.pageInfo.hasNextPage;
-    endCursor = nextPageResponseBody.data.files.pageInfo.endCursor;
+    const shopDetails = await responseOfShop.json();
+    return { shopDetails };
+  } catch (error) {
+    console.log(error, "ErrorResponse");
+    return { error: error.message };
   }
-
-  return { shopData, files };
 };
 
-export default function AdditionalPage() {
-  const { shopData, files } = useLoaderData();
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [showToast, setShowToast] = useState(false); // State for showing toast 123
+export default function FirstPagePage() {
+  const data = useLoaderData();
+  const [shopOwnerName, setShopOwnerName] = useState("");
+  useEffect(() => {
+    const shop = data?.shopDetails?.shop?.shop_owner;
+    setShopOwnerName(shop);
+  }, [data]);
 
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    const zip = new JSZip();
-
-    // Create the main folder 'shopify' to store subfolders
-    const shopifyFolder = zip.folder(`${shopData.name}`);
-    const imageFolder = shopifyFolder.folder("images");
-    const videoFolder = shopifyFolder.folder("videos");
-    const fileFolder = shopifyFolder.folder("files");
-
-    // Add each media file to the appropriate folder
-    const fetchPromises = files.map(({ node }, index) => {
-      let fileUrl = "";
-      let fileName = `file_${index}`; // Default file name
-
-      // Determine the media type and set the URL and folder accordingly
-      if (node.image?.url) {
-        fileUrl = node.image.url;
-        fileName = `${shopData.name}_image_${index}.jpg`;
-        return fetch(fileUrl)
-          .then((response) => response.blob())
-          .then((blob) => {
-            imageFolder.file(fileName, blob); // Save in the 'images' folder
-            setDownloadProgress(((index + 1) / files.length) * 100);
-          });
-      } else if (node.originalSource?.url) {
-        fileUrl = node.originalSource.url;
-        fileName = `${shopData.name}_video_${index}.mp4`; // Assuming video is mp4
-        return fetch(fileUrl)
-          .then((response) => response.blob())
-          .then((blob) => {
-            videoFolder.file(fileName, blob); // Save in the 'videos' folder
-            setDownloadProgress(((index + 1) / files.length) * 100);
-          });
-      } else if (node.embedUrl) {
-        fileUrl = node.embedUrl;
-        fileName = `${shopData.name}_external_${index}.url`; // Save embed URLs as text files
-        return fetch(fileUrl)
-          .then((response) => response.blob())
-          .then((blob) => {
-            fileFolder.file(fileName, blob); // Save in the 'files' folder
-            setDownloadProgress(((index + 1) / files.length) * 100);
-          });
-      } else if (node.preview?.image?.originalSrc) {
-        fileUrl = node.preview.image.originalSrc;
-        fileName = `${shopData.name}_model3d_${index}.png`; // Save 3D model previews as PNGs
-        return fetch(fileUrl)
-          .then((response) => response.blob())
-          .then((blob) => {
-            imageFolder.file(fileName, blob); // Save in the 'images' folder
-            setDownloadProgress(((index + 1) / files.length) * 100);
-          });
-      } else if (node.url) {
-        // Handle generic files (e.g., TTF, PDF)
-        fileUrl = node.url;
-        const mimeType = node.mimeType.split("/")[1]; // Extract the file type from mimeType
-        fileName = `${shopData.name}_file_${index}.${mimeType}`;
-        return fetch(fileUrl)
-          .then((response) => response.blob())
-          .then((blob) => {
-            fileFolder.file(fileName, blob); // Save in the 'files' folder
-            setDownloadProgress(((index + 1) / files.length) * 100);
-          });
-      }
-    });
-
-    await Promise.all(fetchPromises);
-
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, `${shopData.name}-media.zip`);
-
-    setIsDownloading(false);
-    setShowToast(true); // Show the toast when download completes
+  const greetings = () => {
+    const currentHour = new Date().getHours();
+    if (currentHour >= 5 && currentHour < 12) {
+      return "Morning";
+    } else if (currentHour >= 12 && currentHour < 18) {
+      return "Afternoon";
+    } else {
+      return "Evening";
+    }
   };
 
-  const toggleToast = () => setShowToast(false); // Function to close toast
-
   return (
-    <Page title="FileMaster - Exporter">
-      <Frame>
-        <Layout>
-          <Layout.Section>
-            <LegacyCard sectioned>
-              <EmptyState
-                heading="Welcome to FileMaster - Exporter"
-                action={{
-                  icon: ImportIcon,
-                  content: isDownloading ? "Downloading..." : "Export Files",
-                  onAction: handleDownload,
-                  disabled: isDownloading,
-                }}
-                image={app_logo}
-                alt="main_ScriptInjectorp"
-                style={{
-                  maxWidth: 100,
-                  height: 70,
-                  borderRadius: 5,
-                  boxShadow:
-                    "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
-                }}
-              >
-                <Text as="p">
-                  FileMaster makes it easy to download all your media files
-                  (images, videos, 3D models, etc.) from your Shopify admin.
-                  Simply click the button below, and FileMaster will start
-                  exporting your files. Please keep this browser window open
-                  during the process.
-                </Text>
-              </EmptyState>
-            </LegacyCard>
-          </Layout.Section>
+    <Page>
+      <ui-title-bar title="HomePage"></ui-title-bar>
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <Box
+              style={{
+                display: "flex",
+                flexGrow: 1,
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <>
+                <Box>
+                  <Box style={{ display: "flex" }}>
+                    <Text as="h1" variant="headingXl">
+                      Good {greetings()},&nbsp;
+                    </Text>
+                    {shopOwnerName && (
+                      <Text
+                        as="h1"
+                        variant="headingXl"
+                        style={{ display: "none" }}
+                      >
+                        {shopOwnerName} 👋
+                      </Text>
+                    )}
+                  </Box>
+                  <Box paddingBlockStart="100">
+                    <Text as="p" variant="bodyLg">
+                      Welcome to FileMaster - Files Exporter
+                    </Text>
+                  </Box>
+                </Box>
 
-          <Layout.Section>
-            {isDownloading && (
-              <Card background="bg-surface-secondary">
-                <div>
-                  <ProgressBar
-                    progress={downloadProgress}
-                    size="medium"
-                    tone="primary"
-                  />
-                  <Text>{`Download in progress: ${Math.round(downloadProgress)}%`}</Text>
-                </div>
-              </Card>
-            )}
-          </Layout.Section>
-        </Layout>
-        {showToast && (
-          <Toast
-            content="Files downloaded successfully!"
-            onDismiss={toggleToast}
-          />
-        )}{" "}
-        {/* Toast Component */}
-      </Frame>
+              </>
+            </Box>
+          </Card>
+        </Layout.Section>
+        <Layout.Section>
+          <Card>
+            <Box padding="500">
+              <BlockStack gap="300">
+                <Box>
+                  <InlineStack align="center">
+                    <img
+                      src={main_ScriptInjector}
+                      alt="main_ScriptInjectorp"
+                      style={{
+                        width: 150,
+                        height: 150,
+                        borderRadius: "78px",
+
+                        boxShadow:
+                          "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+                      }}
+                    />
+                  </InlineStack>
+                </Box>
+                <Box paddingBlockStart="500">
+                  <InlineStack align="center">
+                    <Text as="h2" variant="headingLg">
+                      Welcome to FileMaster - Files Exporter
+
+
+                    </Text>
+                  </InlineStack>
+                </Box>
+                <Box paddingBlockStart="100">
+                  <InlineStack align="center">
+                    <Text as="p" variant="bodyLg">
+                      FileMaster makes it easy to download all your media files (images, videos, etc.) from our FileMaster - Files Exporter app.
+                    </Text>
+                  </InlineStack>
+                </Box>
+                <Box paddingBlockStart="100">
+                  <InlineStack align="center">
+                    <Button size="large" url="/app/exportpage">
+                      Get Started
+                    </Button>
+                  </InlineStack>
+                </Box>
+              </BlockStack>
+            </Box>
+          </Card>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }
