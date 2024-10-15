@@ -1,6 +1,4 @@
 import {
-  Box,
-  Button,
   Layout,
   Text,
   ProgressBar,
@@ -8,19 +6,46 @@ import {
   LegacyCard,
   EmptyState,
   Card,
+  Frame,
+  Toast,
 } from "@shopify/polaris";
-import app_logo from "../assets/logo1.jpg"
+import app_logo from "../assets/logo1.jpg";
 import { useState } from "react";
 import { useLoaderData } from "@remix-run/react";
-import JSZip from 'jszip';
-import pkg from 'file-saver';
+import JSZip from "jszip";
+import pkg from "file-saver";
 const { saveAs } = pkg;
 import { authenticate } from "../shopify.server";
-import { ImportIcon } from '@shopify/polaris-icons';
+import { ImportIcon } from "@shopify/polaris-icons";
+
+// Helper function to extract file name from URL
+const extractFileName = (url) => {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+
+    // Extract the last part of the pathname (file name)
+    let fileName = pathname.split('/').pop();
+
+    // Remove any query parameters or fragments
+    if (fileName.includes('?')) {
+      fileName = fileName.split('?')[0];
+    }
+    if (fileName.includes('#')) {
+      fileName = fileName.split('#')[0];
+    }
+
+    return fileName;
+  } catch (e) {
+    console.error("Error extracting file name: ", e);
+    return 'unknown_file';
+  }
+};
+
 export const loader = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
-  // GraphQL query to fetch all media types (MediaImage, Video, ExternalVideo, Model3d, GenericFile)
+  // GraphQL query to fetch all media types
   const response = await admin.graphql(`
     query {
       shop {
@@ -79,7 +104,7 @@ export const loader = async ({ request }) => {
   const shopData = responseBody.data.shop;
   let files = responseBody.data.files.edges;
 
-  // Paginate if there are more media files
+  // Pagination logic for more media files
   let hasNextPage = responseBody.data.files.pageInfo.hasNextPage;
   let endCursor = responseBody.data.files.pageInfo.endCursor;
 
@@ -145,68 +170,65 @@ export default function AdditionalPage() {
   const { shopData, files } = useLoaderData();
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
     const zip = new JSZip();
 
     // Create the main folder 'shopify' to store subfolders
-    const shopifyFolder = zip.folder("shopify");
+    const shopifyFolder = zip.folder(`${shopData.name}_File-Master`);
     const imageFolder = shopifyFolder.folder("images");
     const videoFolder = shopifyFolder.folder("videos");
     const fileFolder = shopifyFolder.folder("files");
 
-    // Add each media file to the appropriate folder
     const fetchPromises = files.map(({ node }, index) => {
-      let fileUrl = '';
-      let fileName = `file_${index}`; // Default file name
+      let fileUrl = "";
+      let fileName = `file_${index}`;
 
-      // Determine the media type and set the URL and folder accordingly
       if (node.image?.url) {
         fileUrl = node.image.url;
-        fileName = `${shopData.name}_image_${index}.jpg`;
+        fileName = extractFileName(fileUrl); // Use extractFileName function
         return fetch(fileUrl)
-          .then(response => response.blob())
-          .then(blob => {
-            imageFolder.file(fileName, blob); // Save in the 'images' folder
+          .then((response) => response.blob())
+          .then((blob) => {
+            imageFolder.file(fileName, blob);
             setDownloadProgress(((index + 1) / files.length) * 100);
           });
       } else if (node.originalSource?.url) {
         fileUrl = node.originalSource.url;
-        fileName = `${shopData.name}_video_${index}.mp4`; // Assuming video is mp4
+        fileName = extractFileName(fileUrl); // Use extractFileName function
         return fetch(fileUrl)
-          .then(response => response.blob())
-          .then(blob => {
-            videoFolder.file(fileName, blob); // Save in the 'videos' folder
+          .then((response) => response.blob())
+          .then((blob) => {
+            videoFolder.file(fileName, blob);
             setDownloadProgress(((index + 1) / files.length) * 100);
           });
       } else if (node.embedUrl) {
         fileUrl = node.embedUrl;
-        fileName = `${shopData.name}_external_${index}.url`; // Save embed URLs as text files
+        fileName = `${shopData.name}_external_${index}.url`;
         return fetch(fileUrl)
-          .then(response => response.blob())
-          .then(blob => {
-            fileFolder.file(fileName, blob); // Save in the 'files' folder
+          .then((response) => response.blob())
+          .then((blob) => {
+            fileFolder.file(fileName, blob);
             setDownloadProgress(((index + 1) / files.length) * 100);
           });
       } else if (node.preview?.image?.originalSrc) {
         fileUrl = node.preview.image.originalSrc;
-        fileName = `${shopData.name}_model3d_${index}.png`; // Save 3D model previews as PNGs
+        fileName = extractFileName(fileUrl); // Use extractFileName function
         return fetch(fileUrl)
-          .then(response => response.blob())
-          .then(blob => {
-            imageFolder.file(fileName, blob); // Save in the 'images' folder
+          .then((response) => response.blob())
+          .then((blob) => {
+            imageFolder.file(fileName, blob);
             setDownloadProgress(((index + 1) / files.length) * 100);
           });
       } else if (node.url) {
-        // Handle generic files (e.g., TTF, PDF)
         fileUrl = node.url;
-        const mimeType = node.mimeType.split("/")[1]; // Extract the file type from mimeType
-        fileName = `${shopData.name}_file_${index}.${mimeType}`;
+        fileName = extractFileName(fileUrl); // Use extractFileName function
         return fetch(fileUrl)
-          .then(response => response.blob())
-          .then(blob => {
-            fileFolder.file(fileName, blob); // Save in the 'files' folder
+          .then((response) => response.blob())
+          .then((blob) => {
+            fileFolder.file(fileName, blob);
             setDownloadProgress(((index + 1) / files.length) * 100);
           });
       }
@@ -218,49 +240,68 @@ export default function AdditionalPage() {
     saveAs(content, `${shopData.name}-media.zip`);
 
     setIsDownloading(false);
+    setShowToast(true); // Show the toast when download completes
   };
+
+  const toggleToast = () => setShowToast(false);
 
   return (
     <Page title="FileMaster - Exporter">
-      <Layout>
-        <Layout.Section>
-          <LegacyCard sectioned>
-            <EmptyState
-              heading="Welcome to FileMaster - Exporter"
-              action={{
-                icon: ImportIcon,
-                content: isDownloading ? "Downloading..." : "Export Files",
-                onAction: handleDownload,
-                disabled: isDownloading,
-              }}
-              image={app_logo}
-              alt="main_ScriptInjectorp"
-              style={{
-                maxWidth: 100,
-                height: 70,
-                borderRadius: 5,
-                boxShadow:
-                  "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
-              }}
-            >
-              <Text as="p">
-                FileMaster makes it easy to download all your media files (images, videos, 3D models, etc.) from your Shopify admin. Simply click the button below, and FileMaster will start exporting your files. Please keep this browser window open during the process.
-              </Text>
-            </EmptyState>
-          </LegacyCard>
-        </Layout.Section>
+      <Frame>
+        <Layout>
+          <Layout.Section>
+            <LegacyCard sectioned>
+              <EmptyState
 
-        <Layout.Section>
-          {isDownloading && (
-            <Card background="bg-surface-secondary">
-              <div>
-                <ProgressBar progress={downloadProgress} size="medium" tone="primary" />
-                <Text>{`Download in progress: ${Math.round(downloadProgress)}%`}</Text>
-              </div>
-            </Card>
-          )}
-        </Layout.Section>
-      </Layout>
+                heading="Welcome to FileMaster - Exporter"
+                action={{
+                  icon: ImportIcon,
+                  content: isDownloading ? "Downloading..." : "Export Files",
+                  onAction: handleDownload,
+                  disabled: isDownloading,
+                }}
+                image={app_logo}
+                alt="filemaster"
+                key={new Date().getTime()}
+                style={{
+                  maxWidth: 100,
+                  height: 70,
+                  borderRadius: 5,
+                  boxShadow:
+                    "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+                }}
+              >
+                <Text as="p">
+                  FileMaster makes it easy to download all your media files
+                  (images, videos, etc.) from our FileMaster - Exporter app. Please keep this browser window open
+                  during the process.
+                </Text>
+              </EmptyState>
+            </LegacyCard>
+          </Layout.Section>
+
+          <Layout.Section>
+            {isDownloading && (
+              <Card background="bg-surface-secondary">
+                <div>
+                  <ProgressBar
+                    progress={downloadProgress}
+                    size="medium"
+                    tone="primary"
+                  />
+                  <Text>{`Download in progress: ${Math.round(downloadProgress)}%`}</Text>
+                </div>
+              </Card>
+            )}
+          </Layout.Section>
+        </Layout>
+        {showToast && (
+          <Toast
+            content="Files downloaded successfully!"
+            onDismiss={toggleToast}
+          />
+        )}
+      </Frame>
     </Page>
   );
 }
