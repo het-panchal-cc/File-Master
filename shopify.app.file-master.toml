@@ -3,7 +3,7 @@
 client_id = "55c2f135ecbde996bec49c0df7e13434"
 name = "file-master"
 handle = "file-master"
-application_url = "https://advertisement-norm-cb-am.trycloudflare.com"
+application_url = "https://cup-deluxe-version-terrorism.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "read_files,write_files"
 
 [auth]
 redirect_urls = [
-  "https://advertisement-norm-cb-am.trycloudflare.com/auth/callback",
-  "https://advertisement-norm-cb-am.trycloudflare.com/auth/shopify/callback",
-  "https://advertisement-norm-cb-am.trycloudflare.com/api/auth/callback"
+  "https://cup-deluxe-version-terrorism.trycloudflare.com/auth/callback",
+  "https://cup-deluxe-version-terrorism.trycloudflare.com/auth/shopify/callback",
+  "https://cup-deluxe-version-terrorism.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
