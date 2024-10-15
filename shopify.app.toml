@@ -3,11 +3,11 @@
 client_id = "8f9e305ef6576d9b16a7c39f91e7f50b"
 name = "file-export"
 handle = "file-export-1"
-application_url = "https://dependent-qualifications-presidential-turn.trycloudflare.com"
+application_url = "https://file-master.fly.dev"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = true
+automatically_update_urls_on_dev = false
 dev_store_url = "learning-codecrew.myshopify.com"
 include_config_on_deploy = true
 
@@ -17,9 +17,9 @@ scopes = "read_files,write_files"
 
 [auth]
 redirect_urls = [
-  "https://dependent-qualifications-presidential-turn.trycloudflare.com/auth/callback",
-  "https://dependent-qualifications-presidential-turn.trycloudflare.com/auth/shopify/callback",
-  "https://dependent-qualifications-presidential-turn.trycloudflare.com/api/auth/callback"
+  "https://file-master.fly.dev/auth/callback",
+  "https://file-master.fly.dev/auth/shopify/callback",
+  "https://file-master.fly.dev/api/auth/callback"
 ]
 
 [webhooks]

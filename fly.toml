@@ -1,0 +1,30 @@
+# fly.toml app configuration file generated for file-master on 2024-10-15T12:48:16+05:30
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'file-master'
+primary_region = 'sin'
+
+[build]
+
+
+[env] 
+
+ PORT = "3000"
+ SHOPIFY_APP_URL = "https://file-master.fly.dev/"
+ SHOPIFY_API_KEY = "f99d159177769e3261a83fb4606344fc"
+ SCOPES = "read_files,write_files"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
