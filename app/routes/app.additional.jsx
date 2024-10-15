@@ -25,20 +25,20 @@ const extractFileName = (url) => {
     const pathname = urlObj.pathname;
 
     // Extract the last part of the pathname (file name)
-    let fileName = pathname.split('/').pop();
+    let fileName = pathname.split("/").pop();
 
     // Remove any query parameters or fragments
-    if (fileName.includes('?')) {
-      fileName = fileName.split('?')[0];
+    if (fileName.includes("?")) {
+      fileName = fileName.split("?")[0];
     }
-    if (fileName.includes('#')) {
-      fileName = fileName.split('#')[0];
+    if (fileName.includes("#")) {
+      fileName = fileName.split("#")[0];
     }
 
     return fileName;
   } catch (e) {
     console.error("Error extracting file name: ", e);
-    return 'unknown_file';
+    return "unknown_file";
   }
 };
 
@@ -252,7 +252,6 @@ export default function AdditionalPage() {
           <Layout.Section>
             <LegacyCard sectioned>
               <EmptyState
-
                 heading="Welcome to FileMaster - Exporter"
                 action={{
                   icon: ImportIcon,
@@ -273,8 +272,8 @@ export default function AdditionalPage() {
               >
                 <Text as="p">
                   FileMaster makes it easy to download all your media files
-                  (images, videos, etc.) from our FileMaster - Exporter app. Please keep this browser window open
-                  during the process.
+                  (images, videos, etc.) from our FileMaster - Exporter app.
+                  Please keep this browser window open during the process.
                 </Text>
               </EmptyState>
             </LegacyCard>
