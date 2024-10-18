@@ -3,23 +3,22 @@
 client_id = "8f9e305ef6576d9b16a7c39f91e7f50b"
 name = "file-export"
 handle = "file-export-1"
-application_url = "https://file-master.fly.dev"
+application_url = "https://ids-worship-respondents-biggest.trycloudflare.com"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = false
+automatically_update_urls_on_dev = true
 dev_store_url = "learning-codecrew.myshopify.com"
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_files,write_files"
+scopes = "read_files,read_products,write_files,write_products"
 
 [auth]
 redirect_urls = [
-  "https://file-master.fly.dev/auth/callback",
-  "https://file-master.fly.dev/auth/shopify/callback",
-  "https://file-master.fly.dev/api/auth/callback"
+  "https://ids-worship-respondents-biggest.trycloudflare.com/auth/callback",
+  "https://ids-worship-respondents-biggest.trycloudflare.com/auth/shopify/callback",
+  "https://ids-worship-respondents-biggest.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
