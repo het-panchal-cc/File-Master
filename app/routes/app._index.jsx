@@ -9,8 +9,8 @@ import {
   BlockStack,
   Button,
 } from "@shopify/polaris";
-import main_ScriptInjector from "../assets/logo1.jpg";
-// import head_ScriptInjector from "../assets/ScriptInjector.png";
+
+import logo from "../assets/filemaster_logo_dark.png";
 import { useLoaderData } from "@remix-run/react";
 import { apiVersion, authenticate } from "../shopify.server";
 import { useEffect, useState } from "react";
@@ -109,12 +109,12 @@ export default function FirstPagePage() {
                 <Box>
                   <InlineStack align="center">
                     <img
-                      src={main_ScriptInjector}
-                      alt="main_ScriptInjectorp"
+                      src={logo}
+                      alt="File master"
                       style={{
                         width: 150,
                         height: 150,
-                        borderRadius: "78px",
+                        borderRadius: "5px",
 
                         boxShadow:
                           "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",

@@ -2,6 +2,7 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { login } from "../../shopify.server";
 import indexStyles from "./styles.module.css";
+import logo from "../../assets/filemaster_logo.png";
 
 export const links = () => [{ rel: "stylesheet", href: indexStyles }];
 
@@ -22,7 +23,7 @@ export default function App() {
     <div datatype="index">
       <div datatype="content">
         <img
-          src="https://cdn.shopify.com/s/files/1/0578/4656/2880/files/filemaster_logo.jpg?v=1728977740"
+          src={logo}
           alt="login_logo"
           style={{ margin: "0 auto" }}
           height="100"

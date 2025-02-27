@@ -19,6 +19,7 @@ import pkg from "file-saver";
 const { saveAs } = pkg;
 import { authenticate } from "../shopify.server";
 import { ImportIcon } from "@shopify/polaris-icons";
+import logo from "../assets/filemaster_logo_dark.png";
 
 const extractFileName = (url) => {
   try {
@@ -261,12 +262,12 @@ export default function AdditionalPage() {
                     <Box>
                       <InlineStack align="center">
                         <img
-                          src="https://codecrewinfotech.com/wp-content/uploads/2024/10/filemaster_logo.jpg"
+                          src={logo}
                           alt="FileMaster logo"
                           style={{
                             width: 150,
                             height: 150,
-                            borderRadius: "78px",
+                            borderRadius: "5px",
                             boxShadow:
                               "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
                           }}
